@@ -1,25 +1,28 @@
 {
-  "name": "gltf-loader-2",
-  "version": "0.0.3",
-  "description": "A webpack loader for .gltf files, should automatically bundles all referenced files.",
+  "name": "@jpweeks/gltf-loader",
+  "version": "1.0.0",
+  "description": "A webpack loader for glTF files, automatically bundles all referenced files.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "github.com/MONOGRID/gltf-loader-2"
+    "url": "github.com/jpweeks/gltf-loader"
   },
   "bugs": {
-    "url": "https://github.com/MONOGRID/gltf-loader-2/issues"
+    "url": "https://github.com/jpweeks/gltf-loader/issues"
   },
-  "homepage": "https://github.com/MONOGRID/gltf-loader-2",
+  "homepage": "https://github.com/jpweeks/gltf-loader",
   "keywords": [
     "gltf",
     "webgl",
     "webpack",
     "loader"
   ],
-  "author": "Daniele Pelagatti <daniele@mono-grid.com>",
+  "contributors": [
+    "Jay Weeks <jay.patrick.weeks@gmail.com>",
+    "Daniele Pelagatti <daniele@mono-grid.com>"
+  ],
   "license": "MIT"
 }

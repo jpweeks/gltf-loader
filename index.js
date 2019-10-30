@@ -47,7 +47,7 @@ function resolveDependency (loader, context, chunkPath) {
 }
 
 function generateGltfModule (source, assets) {
-  let result = '/***** GLTF Module *****/'
+  let result = '/***** glTF Module *****/'
   let gltfString = source.replace(/(\n|\r|\t| )/gm, '')
 
   assets.forEach((asset, i) => {
