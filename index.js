@@ -1,65 +1,62 @@
 const path = require('path');
 
-function resolveDependency(loader, context, chunkPath) {
-  return new Promise((resolve, reject) => {
-    loader.resolve(context, chunkPath, (err, res) => {
-      if(err) reject(err);
-      else resolve(res);
-    });
-  });
-}
+module.exports = function (source) {
+  if (this.cacheable) this.cacheable()
+  const callback = this.async()
 
-module.exports = function(source) {
-  if (this.cacheable) this.cacheable();
-  const callback = this.async();
+  let assets = findAssetPaths(source)
+  let gltfOut = generateGltfModule(source, assets)
 
-  // Match all occurences of various texture/image formats
-  var pattern = /^\s*("uri"\s*:\s*).*/gm;
-  var matches = source.match(pattern);
-  var trimmedMatches = [];
+  let resolutions = assets.map((item) => (
+    resolveDependency(this, path.dirname(this.resource), `./${item}`)
+  ))
 
-  if (matches && typeof matches.filter === 'function') {
-    // Make them unique
-    var uniqueMatches = matches.filter(
-      (value, index, self) => self.indexOf(value) === index
-    );
-    // Trim away matched space at first char
-    trimmedMatches = uniqueMatches.map(item =>
-      item.trim().replace(/^\s*("uri"\s*:\s*)/, '').replace(/"|,/g, '')
-    );
-  }
-  // add dependencies to this loader
-  let promises = []
-  trimmedMatches.forEach((item) => {
-    promises.push(resolveDependency(this, path.dirname(this.resource), './' + item))
-  })
-
-  // resolve dependencies
-  Promise.all(promises).then((dependencies) => {
-    // add dependencies
-    dependencies.forEach(dependency => {
+  Promise.all(resolutions).then((dependencies) => {
+    dependencies.forEach((dependency) => {
       this.addDependency(dependency)
     })
-
-    // prepare result
-    var result = '';
-
-    // trim source of all newlines and spaces
-    var gltfString = source.replace( new RegExp('(\n|\r|\t| )', 'gm'), "");
-
-    for (let i = 0; i < trimmedMatches.length; i++) {
-      // add a require statement to result
-      result = result.concat("var asset" + i + " = require('./" + trimmedMatches[i] + "');\n");
-      // replace require in gltfString
-      gltfString = gltfString.replace( new RegExp(trimmedMatches[i], 'g'), "' + asset" + i + " + '" )
-    }
-    // add export gltf string
-    result = result.concat('module.exports = \'' + gltfString + '\';\n')
-    // callback
-    callback(null, result)
-
+    callback(null, gltfOut)
   }).catch((err) => {
-    // some dependencies errored
     callback(err)
   })
-};
+}
+
+// Match all occurences of various texture/image formats
+function findAssetPaths (source) {
+  let pattern = /\s*"uri"\s*:\s*"([\w\.-_]+)"/g
+  let matches = []
+  let match
+
+  while ((match = pattern.exec(source)) !== null) {
+    let matchName = match[1]
+    if (matches.indexOf(matchName) === -1) {
+      matches.push(matchName)
+    }
+  }
+
+  return matches
+}
+
+function resolveDependency (loader, context, chunkPath) {
+  return new Promise((resolve, reject) => {
+    loader.resolve(context, chunkPath, (err, res) => {
+      if (err) reject(err)
+      else resolve(res)
+    })
+  })
+}
+
+function generateGltfModule (source, assets) {
+  let result = '/***** GLTF Module *****/'
+  let gltfString = source.replace(/(\n|\r|\t| )/gm, '')
+
+  assets.forEach((asset, i) => {
+    result += `var __asset${i}__ = require('./${asset}');\n`
+    gltfString = gltfString.replace(
+      new RegExp(asset, 'g'), `' + __asset${i}__ + '`)
+  })
+
+  result += `module.exports = '${gltfString}';\n`
+
+  return result
+}
