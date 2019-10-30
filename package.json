@@ -1,7 +1,7 @@
 {
   "name": "@jpweeks/gltf-loader",
   "version": "1.0.0",
-  "description": "A webpack loader for glTF files, automatically bundles all referenced files.",
+  "description": "A Webpack loader for glTF assets. Automatically bundles all referenced files.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

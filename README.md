@@ -1,14 +1,11 @@
-# Webpack GLTF loader 2
+# Webpack glTF Loader
 
-A webpack loader for ``.gltf`` files, should automatically bundles all referenced files.
+A Webpack loader for __glTF__ assets. Automatically bundles all referenced files.
 
-Based on the work by [Magnus Bergman](https://github.com/magnus-bergman) but rewritten almost from scratch.
+Note that this loader creates a new module for each `.gltf` source, which will be inlined in the main bundle when using a default configuration.
+Consider using [dynamic imports / code splitting](https://webpack.js.org/guides/code-splitting/) to keep bundles small.
 
-https://www.npmjs.com/package/gltf-loader this is his original loader that didn't work for me when I tried so I decided to rewrite it.
-
-(it also doesn't have a valid github repository to contribute to, as of today, 10/05/2018)
-
-**WARNING: this is pretty much untested and alpha version, contrubutions appreciated**
+This loader is based on [MONOGRID/gltf-loader-2](https://github.com/MONOGRID/gltf-loader-2).
 
 ## Webpack configuration 
 
@@ -33,7 +30,7 @@ rules: [
   {
     // match all .gltf files
     test: /\.(gltf)$/,
-    loader: 'gltf-loader-2'
+    loader: '@jpweeks/gltf-loader'
   },
   {
     // here I match only IMAGE and BIN files under the gltf folder
