@@ -1,8 +1,8 @@
-const path = require('path');
+const path = require('path')
 
 module.exports = function (source) {
   if (this.cacheable) this.cacheable()
-  const callback = this.async()
+  let done = this.async()
 
   let assets = findAssetPaths(source)
   let gltfOut = generateGltfModule(source, assets)
@@ -12,12 +12,9 @@ module.exports = function (source) {
   ))
 
   Promise.all(resolutions).then((dependencies) => {
-    dependencies.forEach((dependency) => {
-      this.addDependency(dependency)
-    })
-    callback(null, gltfOut)
+    done(null, gltfOut)
   }).catch((err) => {
-    callback(err)
+    done(err)
   })
 }
 
@@ -39,9 +36,11 @@ function findAssetPaths (source) {
 
 function resolveDependency (loader, context, chunkPath) {
   return new Promise((resolve, reject) => {
-    loader.resolve(context, chunkPath, (err, res) => {
-      if (err) reject(err)
-      else resolve(res)
+    loader.resolve(context, chunkPath, (err, dependency) => {
+      if (err) return reject(err)
+
+      loader.addDependency(dependency)
+      resolve(dependency)
     })
   })
 }
