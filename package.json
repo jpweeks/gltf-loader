@@ -1,6 +1,6 @@
 {
   "name": "@jpweeks/gltf-loader",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A Webpack loader for glTF assets. Automatically bundles all referenced files.",
   "main": "index.js",
   "scripts": {
@@ -20,8 +20,8 @@
     "webpack",
     "loader"
   ],
+  "author": "Jay Weeks <jay.patrick.weeks@gmail.com>",
   "contributors": [
-    "Jay Weeks <jay.patrick.weeks@gmail.com>",
     "Daniele Pelagatti <daniele@mono-grid.com>"
   ],
   "license": "MIT",
