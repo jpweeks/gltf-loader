@@ -2,9 +2,6 @@
 
 A Webpack loader for __glTF__ assets. Automatically bundles all referenced files.
 
-Note that this loader creates a new module for each `.gltf` source, which will be inlined in the main bundle when using a default configuration.
-Consider using [dynamic imports / code splitting](https://webpack.js.org/guides/code-splitting/) to keep bundles small.
-
 This loader is based on [MONOGRID/gltf-loader-2](https://github.com/MONOGRID/gltf-loader-2).
 
 ## Webpack configuration 

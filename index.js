@@ -1,37 +1,48 @@
 const path = require('path')
+const loaderUtils = require('loader-utils')
 
-module.exports = function (source) {
+module.exports = function (content) {
   if (this.cacheable) this.cacheable()
+
+  let options = loaderUtils.getOptions(this) || {}
+  let context = options.context || this.rootContext
   let done = this.async()
 
-  let assets = findAssetPaths(source)
-  let gltfOut = generateGltfModule(source, assets)
+  const resolveLoaderAssets = resolveAssets.bind(this)
+  const emitLoaderData = emitData.bind(this, options, context)
 
-  let resolutions = assets.map((item) => (
-    resolveDependency(this, path.dirname(this.resource), `./${item}`)
-  ))
+  let json = JSON.parse(content)
+  let { images, buffers } = stripAssets(json)
+  let dataPath = emitLoaderData(json)
 
-  Promise.all(resolutions).then((dependencies) => {
+  Promise.all([
+    resolveLoaderAssets(images),
+    resolveLoaderAssets(buffers)
+  ]).then(([images, buffers]) => {
+    let gltfOut = generateGltfModule(json, images, buffers, dataPath)
     done(null, gltfOut)
   }).catch((err) => {
     done(err)
   })
 }
 
-// Match all occurences of various texture/image formats
-function findAssetPaths (source) {
-  let pattern = /\s*"uri"\s*:\s*"([\w\.-_]+)"/g
-  let matches = []
-  let match
+function stripAssets (json) {
+  let images = json.images || []
+  let buffers = json.buffers || []
 
-  while ((match = pattern.exec(source)) !== null) {
-    let matchName = match[1]
-    if (matches.indexOf(matchName) === -1) {
-      matches.push(matchName)
-    }
-  }
+  delete json.images
+  delete json.buffers
 
-  return matches
+  return { images, buffers }
+}
+
+function resolveAssets (assets) {
+  if (!assets) return Promise.resolve([])
+  let resourceDir = path.dirname(this.resource)
+  return Promise.all(
+    assets.map(({ uri }) =>
+      resolveDependency(this, resourceDir, `./${uri}`).then(() => uri)
+    ))
 }
 
 function resolveDependency (loader, context, chunkPath) {
@@ -45,17 +56,49 @@ function resolveDependency (loader, context, chunkPath) {
   })
 }
 
-function generateGltfModule (source, assets) {
-  let result = '/***** glTF Module *****/'
-  let gltfString = source.replace(/(\n|\r|\t| )/gm, '')
+function emitData (options, context, json) {
+  let content = JSON.stringify(json)
+  content = content.slice(1, -1)
 
-  assets.forEach((asset, i) => {
-    result += `var __asset${i}__ = require('./${asset}');\n`
-    gltfString = gltfString.replace(
-      new RegExp(asset, 'g'), `' + __asset${i}__ + '`)
+  let url = loaderUtils.interpolateName(
+    this,
+    options.name || '[contenthash].[ext]',
+    {
+      context,
+      content,
+      regExp: options.regExp,
+    }
+  )
+
+  let outputPath = url
+  let publicPath = `__webpack_public_path__ + ${JSON.stringify(outputPath)}`
+
+  this.emitFile(outputPath, content)
+
+  return publicPath
+}
+
+function generateGltfModule (json, images, buffers, dataPath) {
+  let moduleSource = '/***** glTF Module *****/\n'
+  let gltfString = ''
+
+  gltfString += `images:[`
+  images.forEach((asset, i, arr) => {
+    gltfString += `require('./${asset}')`
+    if (i < arr.length - 1) gltfString += ','
   })
+  gltfString += `],\n`
 
-  result += `module.exports = '${gltfString}';\n`
+  gltfString += `buffers:[`
+  buffers.forEach((asset, i, arr) => {
+    gltfString += `require('./${asset}')`
+    if (i < arr.length - 1) gltfString += ','
+  })
+  gltfString += `],\n`
 
-  return result
+  gltfString += `dataPath:${dataPath}`
+
+  moduleSource += `module.exports = {\n${gltfString}};\n`
+
+  return moduleSource
 }
